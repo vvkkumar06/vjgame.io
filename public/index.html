@@ -13,6 +13,7 @@
 
 <body>
     <button onclick="startGame()">Start Game</button>
+    <button onclick="move()">Move</button>
 <script>
    function startGame() {
         socket.emit('new-game', {
@@ -21,9 +22,12 @@
                 move: undefined
             },
             clientInfo: {
-                
+
             }
         })
+   }
+   function move() {
+        socket.emit('move', {availableCards: [2,34,2,3], move: 5})
    }
 </script>
 </body>

@@ -130,7 +130,8 @@ class VjGame {
         initializePlayer(roomName, this.client.id, clientInfo);
         updateGameState(roomName, this.client.id, gameState);
         this.info(`Joining Room: ${roomId}`);
-
+        this.roomName = roomName;
+        this.connectedClients = this.getConnectedClients(roomName);
         // If room is full then start game
         if (this.getConnectedClientsCount(roomId) === this.roomSize) {
             this._startGame(roomName);
@@ -183,11 +184,12 @@ class VjGame {
     * Game Over event
     */
     endGameHandler() {
-        logger.info('(Server): cleaning room');
+        info('(Server): cleaning room');
         this.server.socketsLeave(this.getConnectedRooms());
     }
 
     moveHandler(args, cb) {
+        this.info('Move received');
         this._makeMove(args);
     }
 
@@ -199,14 +201,13 @@ class VjGame {
     //private methods
     _startGame = (roomName) => {
         this.info(`Starting Game for Room: ${roomName}`);
-        this.roomName = roomName;
-        this.connectedClients = this.getConnectedClients(roomName);
         this.server.in(roomName).emit('start-game');
         this._makeMove();
     }
     _makeMove = (gameState) => {
+        this.info(this.roomName);
         clearTimer(this.roomName, this.client.id);
-        gameState && updateGameState(gameState);
+        gameState && updateGameState(this.roomName, this.client.id, gameState);
         if(!isTimerRunning(this.roomName)) {
             requestMove(this.roomName, this.server, this.moveType);
             createTimer(this.roomName, this.server, this.timePerRound, this.updateGameStateOnTimeout, this.moveType);
