@@ -1,5 +1,5 @@
 const logger = require('./../logger');
-const { updateGameState, initializePlayer, MOVE_TYPE, clearTimer, requestMove } = require('./VjRoom');
+const { updateGameState, initializePlayer, MOVE_TYPE, clearTimer, requestMove, createTimer } = require('./VjRoom');
 
 class VjGame {
     _defaultOptions = {
@@ -39,7 +39,7 @@ class VjGame {
     //intialize events of game
     intializeEvents() {
         this.info('Initializing Events');
-        this.client.on('new-game', (args, cb) => this.newGameHandle(args, cb));
+        this.client.on('new-game', (args, cb) => this.newGameHandler(args, cb));
         this.client.on('end-game', (args, cb) => this.endGameHandler(args, cb));
         this.client.on('move', (args, cb) => this.moveHandler(args, cb));
         this.client.on('disconnect', () => this.disconnectHandler());
@@ -207,8 +207,8 @@ class VjGame {
     _makeMove = (gameState) => {
         clearTimer(this.roomName, this.client.id);
         gameState && updateGameState(gameState);
-        requestMove(this.roomName, this.connectedClients, this.moveType);
-        createTimer(this.roomName, this.server, this.updateGameStateOnTimeout);
+        requestMove(this.roomName, this.server, this.moveType);
+        createTimer(this.roomName, this.server, this.timePerRound, this.updateGameStateOnTimeout);
     }
 }
 

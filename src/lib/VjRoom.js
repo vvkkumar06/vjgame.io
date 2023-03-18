@@ -1,3 +1,5 @@
+const logger = require("../logger");
+
 const rooms = {};
 const roomsTimer = {};
 
@@ -6,6 +8,12 @@ const MOVE_TYPE = {
     ALL: 'ALL'
 }
 
+function info(roomName, message) {
+    logger.info(`(Room: ${roomName}): ${message}`);
+}
+function warn(roomName, message) {
+    logger.warning(`(Room: ${roomName}): ${message}`);
+}
 
 /***
  * {
@@ -74,26 +82,26 @@ const setCurrentTurn = (roomName, moveType) => {
 const getCurrentTurn = (roomName) => rooms[roomName]['turn'];
 
 const getClientIdsFromTurn = (roomName) => {
-    let turn = getCurrentTurn();
+    let turn = getCurrentTurn(roomName);
     if (!turn) {
         return Object.keys(rooms[roomName]['gameState']);
     }
     return [rooms[roomName]['players'][turn]];
 };
 
-const createTimer = (roomName, server, updateGameStateOnTimeout) => {
+const createTimer = (roomName, server, timePerRound, updateGameStateOnTimeout) => {
     if (!roomsTimer[roomName]) {
         roomsTimer[roomName] = {};
     }
-    const currentTurnClients = getClientIdsFromTurn(this.roomName);
+    const currentTurnClients = getClientIdsFromTurn(roomName);
 
     currentTurnClients.forEach(clientId => {
         roomsTimer[roomName][clientId] = setTimeout(() => {
             //Make timeout emit
             server.to(clientId).emit('timeout');
-            updateGameState(roomName, clientId, updateGameStateOnTimeout(getGameStateByClientId(clientId)));
+            updateGameState(roomName, clientId, updateGameStateOnTimeout(getGameStateByClientId(roomName, clientId)));
             //Automate move from server
-        }, this.timePerRound);
+        }, timePerRound);
     })
 }
 
@@ -101,9 +109,10 @@ const clearTimer = (roomName, clientId) => {
     return roomsTimer[roomName] && clearTimeout(roomsTimer[roomName][clientId]);
 }
 
-const requestMove = (roomName, clients, moveType) => {
-    setCurrentTurn(clients, moveType);
-    this.server.in(roomName).emit('request-move', rooms[roomName]);
+const requestMove = (roomName, server, moveType) => {
+    info(roomName, JSON.stringify(rooms[roomName]))
+    setCurrentTurn(roomName, moveType);
+    server.in(roomName).emit('request-move', rooms[roomName]);
 }
 
 

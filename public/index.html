@@ -12,8 +12,11 @@
 </head>
 
 <body>
+    <button onclick="startGame()">Start Game</button>
 <script>
-    
+   function startGame() {
+        socket.emit('new-game', {})
+   }
 </script>
 </body>
 
