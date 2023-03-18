@@ -23,7 +23,7 @@ function setupGames(io, socket) {
       roomSize: 2,
       name: 'cricket',
       updateGameStateOnTimeout, 
-      timePerRound: 30000,
+      timePerRound: 10000,
       moveType: 'ALL'
     }
   );

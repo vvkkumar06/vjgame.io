@@ -1,5 +1,5 @@
 const logger = require('./../logger');
-const { updateGameState, initializePlayer, MOVE_TYPE, clearTimer, requestMove, createTimer } = require('./VjRoom');
+const { updateGameState, initializePlayer, MOVE_TYPE, clearTimer, requestMove, createTimer, isTimerRunning } = require('./VjRoom');
 
 class VjGame {
     _defaultOptions = {
@@ -127,7 +127,7 @@ class VjGame {
         const { gameState, clientInfo } = args;
         let roomName = roomId.startsWith(this.name) ? roomId : `${this.name}-${roomId}`;
         this.client.join(roomName);
-        initializePlayer(roomName, this.client.id, this.clientInfo, gameState);
+        initializePlayer(roomName, this.client.id, clientInfo);
         updateGameState(roomName, this.client.id, gameState);
         this.info(`Joining Room: ${roomId}`);
 
@@ -207,8 +207,10 @@ class VjGame {
     _makeMove = (gameState) => {
         clearTimer(this.roomName, this.client.id);
         gameState && updateGameState(gameState);
-        requestMove(this.roomName, this.server, this.moveType);
-        createTimer(this.roomName, this.server, this.timePerRound, this.updateGameStateOnTimeout);
+        if(!isTimerRunning(this.roomName)) {
+            requestMove(this.roomName, this.server, this.moveType);
+            createTimer(this.roomName, this.server, this.timePerRound, this.updateGameStateOnTimeout, this.moveType);
+        }  
     }
 }
 

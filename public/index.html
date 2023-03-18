@@ -15,7 +15,15 @@
     <button onclick="startGame()">Start Game</button>
 <script>
    function startGame() {
-        socket.emit('new-game', {})
+        socket.emit('new-game', {
+            gameState: {
+                availableCards: [2,3,5,7,12],
+                move: undefined
+            },
+            clientInfo: {
+                
+            }
+        })
    }
 </script>
 </body>

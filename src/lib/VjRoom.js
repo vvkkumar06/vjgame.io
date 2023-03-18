@@ -9,7 +9,7 @@ const MOVE_TYPE = {
 }
 
 function info(roomName, message) {
-    logger.info(`(Room: ${roomName}): ${message}`);
+    logger.roomInfo(`(Room: ${roomName}): ${message}`);
 }
 function warn(roomName, message) {
     logger.warning(`(Room: ${roomName}): ${message}`);
@@ -39,7 +39,8 @@ function warn(roomName, message) {
  * }
  */
 
-const initializePlayer = (roomName, clientId, clientInfo, gameState) => {
+const initializePlayer = (roomName, clientId, clientInfo) => {
+    info(roomName, `Intializing players`);
     if (!rooms[roomName]) {
         rooms[roomName] = {
             players: {}
@@ -56,6 +57,7 @@ const getGameStateByClientId = (roomName, clientId) => rooms[roomName]['gameStat
 
 
 const updateGameState = (roomName, clientId, gameState) => {
+    info(roomName, `Updating game state- ${JSON.stringify(gameState)}`);
     if (!rooms[roomName]['gameState']) {
         rooms[roomName]['gameState'] = {}
     }
@@ -63,6 +65,7 @@ const updateGameState = (roomName, clientId, gameState) => {
 };
 
 const setCurrentTurn = (roomName, moveType) => {
+    info(roomName, `Setting current turn`);
     if (moveType !== MOVE_TYPE.ALL) {
         if (rooms[roomName] && !rooms[roomName]['lastTurn']) {
             rooms[roomName]['turn'] = 0;
@@ -82,6 +85,7 @@ const setCurrentTurn = (roomName, moveType) => {
 const getCurrentTurn = (roomName) => rooms[roomName]['turn'];
 
 const getClientIdsFromTurn = (roomName) => {
+    info(roomName, `Getting client id from given turn`);
     let turn = getCurrentTurn(roomName);
     if (!turn) {
         return Object.keys(rooms[roomName]['gameState']);
@@ -89,7 +93,8 @@ const getClientIdsFromTurn = (roomName) => {
     return [rooms[roomName]['players'][turn]];
 };
 
-const createTimer = (roomName, server, timePerRound, updateGameStateOnTimeout) => {
+const createTimer = (roomName, server, timePerRound, updateGameStateOnTimeout, moveType) => {
+    info(roomName, `Creating timer`);
     if (!roomsTimer[roomName]) {
         roomsTimer[roomName] = {};
     }
@@ -98,19 +103,33 @@ const createTimer = (roomName, server, timePerRound, updateGameStateOnTimeout) =
     currentTurnClients.forEach(clientId => {
         roomsTimer[roomName][clientId] = setTimeout(() => {
             //Make timeout emit
-            server.to(clientId).emit('timeout');
-            updateGameState(roomName, clientId, updateGameStateOnTimeout(getGameStateByClientId(roomName, clientId)));
+            info(roomName, `Client timeout - sending message to client`);
             //Automate move from server
+            updateGameState(roomName, clientId, updateGameStateOnTimeout(getGameStateByClientId(roomName, clientId)));
+            clearTimer(roomName, clientId);
+            if(!isTimerRunning(roomName)) {
+                requestMove(roomName, server, moveType);
+                createTimer(roomName, server, timePerRound, updateGameStateOnTimeout, moveType);
+            }
         }, timePerRound);
     })
 }
 
+const isTimerRunning = (roomName) => {
+    let timer = roomsTimer[roomName] ? Object.values(roomsTimer[roomName]).find(timer => timer) : false;
+    return Boolean(timer);
+}
+
 const clearTimer = (roomName, clientId) => {
-    return roomsTimer[roomName] && clearTimeout(roomsTimer[roomName][clientId]);
+    info(roomName, `Clearing timeout for client ${clientId}`);
+    if(roomsTimer[roomName] ) {
+        clearTimeout(roomsTimer[roomName][clientId]);
+        roomsTimer[roomName][clientId] = undefined;
+    }
 }
 
 const requestMove = (roomName, server, moveType) => {
-    info(roomName, JSON.stringify(rooms[roomName]))
+    info(roomName, 'Requesting a move');
     setCurrentTurn(roomName, moveType);
     server.in(roomName).emit('request-move', rooms[roomName]);
 }
@@ -119,7 +138,7 @@ const requestMove = (roomName, server, moveType) => {
 module.exports = {
     initializePlayer, setCurrentTurn, updateGameState, 
     getCurrentTurn, getClientIdsFromTurn, createTimer, clearTimer,
-    requestMove,
+    requestMove, isTimerRunning,
     rooms,
     roomsTimer,
     MOVE_TYPE
