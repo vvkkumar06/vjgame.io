@@ -55,7 +55,7 @@ const updateGameState = (roomName, clientId, gameState) => {
 };
 
 const setCurrentTurn = (roomName, moveType) => {
-    if(moveType !== MOVE_TYPE.ALL) {
+    if (moveType !== MOVE_TYPE.ALL) {
         if (rooms[roomName] && !rooms[roomName]['lastTurn']) {
             rooms[roomName]['turn'] = 0;
         }
@@ -71,14 +71,14 @@ const setCurrentTurn = (roomName, moveType) => {
     }
 };
 
-const getCurrentTurn = (roomName) =>  rooms[roomName]['turn'];
+const getCurrentTurn = (roomName) => rooms[roomName]['turn'];
 
 const getClientIdsFromTurn = (roomName) => {
     let turn = getCurrentTurn();
-    if(!turn) {
+    if (!turn) {
         return Object.keys(rooms[roomName]['gameState']);
     }
-   return [ rooms[roomName]['players'][turn] ];
+    return [rooms[roomName]['players'][turn]];
 };
 
 const createTimer = (roomName, server, updateGameStateOnTimeout) => {
@@ -97,10 +97,20 @@ const createTimer = (roomName, server, updateGameStateOnTimeout) => {
     })
 }
 
+const clearTimer = (roomName, clientId) => {
+    return roomsTimer[roomName] && clearTimeout(roomsTimer[roomName][clientId]);
+}
+
+const requestMove = (roomName, clients, moveType) => {
+    setCurrentTurn(clients, moveType);
+    this.server.in(roomName).emit('request-move', rooms[roomName]);
+}
 
 
 module.exports = {
-    initializePlayer, setCurrentTurn, updateGameState, getCurrentTurn, getClientIdsFromTurn, createTimer,
+    initializePlayer, setCurrentTurn, updateGameState, 
+    getCurrentTurn, getClientIdsFromTurn, createTimer, clearTimer,
+    requestMove,
     rooms,
     roomsTimer,
     MOVE_TYPE

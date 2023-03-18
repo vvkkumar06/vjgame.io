@@ -1,5 +1,5 @@
 const logger = require('./../logger');
-const { updateGameState, initializePlayer, rooms, setCurrentTurn, MOVE_TYPE } = require('./VjRoom');
+const { updateGameState, initializePlayer, MOVE_TYPE, clearTimer, requestMove } = require('./VjRoom');
 
 class VjGame {
     _defaultOptions = {
@@ -193,7 +193,7 @@ class VjGame {
 
     disconnectHandler(args, cb) {
         this.warn('Disconnected');
-        clearTimeout(roomsTimer[this.roomName][this.client.id]);
+        clearTimer(this.roomName, this.client.id);
     }
 
     //private methods
@@ -205,16 +205,11 @@ class VjGame {
         this._makeMove();
     }
     _makeMove = (gameState) => {
-        clearTimeout(roomsTimer[this.roomName][this.client.id]);
+        clearTimer(this.roomName, this.client.id);
         gameState && updateGameState(gameState);
-        requestMove();
+        requestMove(this.roomName, this.connectedClients, this.moveType);
         createTimer(this.roomName, this.server, this.updateGameStateOnTimeout);
     }
-    _requestMove = () => {
-        setCurrentTurn(this.clients, this.moveType);
-        this.server.in(this.roomName).emit('request-move', rooms[this.roomName]);
-    }
-    
 }
 
 module.exports = {
