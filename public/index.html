@@ -14,20 +14,36 @@
 <body>
     <button onclick="startGame()">Start Game</button>
     <button onclick="move()">Move</button>
+    <input type="text" id="moveText"/>
 <script>
+    let nextRound;
    function startGame() {
         socket.emit('new-game', {
             gameState: {
                 availableCards: [2,3,5,7,12],
-                move: undefined
+                move: {}
             },
             clientInfo: {
 
             }
         })
+        socket.on('request-move', (args) => {
+            nextRound = args.nextRound;
+            console.log(args)
+        })
+        socket.on('game-status', (args) => {
+            console.log(args)
+        })
+        socket.on('winner', (args) => {
+            console.log(args.gameState)
+            if(args.winner.includes(socket.id)){
+                alert('You won')
+            }
+        })
    }
    function move() {
-        socket.emit('move', {availableCards: [2,34,2,3], move: 5})
+        const move = document.getElementById('moveText').value;
+        socket.emit('move', {  move : { [nextRound] : move}})
    }
 </script>
 </body>

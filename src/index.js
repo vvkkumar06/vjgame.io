@@ -19,7 +19,6 @@ const io = new Server(httpServer, {
 });
 
 io.on('connection', (socket) => {
-    logger.info(`(Client: ${socket.id}): New Connection`)
     setupGames(io, socket);
 });
 

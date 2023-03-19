@@ -7,6 +7,7 @@ class VjGame {
         roomSize: 2,
         customEvents: {},
         updateGameStateOnTimeout: () => { },
+        verifyWinState: () => {},
         moveType: MOVE_TYPE.ALTERNATE,
         timePerRound: 10000
     }
@@ -18,6 +19,7 @@ class VjGame {
         this.customEvents = options.customEvents;
         this.clientInfo = options.clientInfo;
         this.updateGameStateOnTimeout = options.updateGameStateOnTimeout;
+        this.verifyWinState = options.verifyWinState;
         this.gameState = options.gameState;
         this.moveType = options.moveType;
         this.timePerRound = options.timePerRound;
@@ -207,10 +209,10 @@ class VjGame {
     _makeMove = (gameState) => {
         this.info(this.roomName);
         clearTimer(this.roomName, this.client.id);
-        gameState && updateGameState(this.roomName, this.client.id, gameState);
+        gameState && updateGameState(this.roomName, this.client.id, gameState, this.server, this.verifyWinState);
         if(!isTimerRunning(this.roomName)) {
             requestMove(this.roomName, this.server, this.moveType);
-            createTimer(this.roomName, this.server, this.timePerRound, this.updateGameStateOnTimeout, this.moveType);
+            createTimer(this.roomName, this.server, this.timePerRound, this.updateGameStateOnTimeout, this.moveType, this.verifyWinState);
         }  
     }
 }
